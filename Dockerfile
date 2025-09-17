@@ -41,6 +41,9 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     php-cli php-common php-xml php-mbstring php-curl php-zip \
   && rm -rf /var/lib/apt/lists/*
 
+# Ensure Git initializes repos with main by default
+RUN git config --global init.defaultBranch main
+
 # ---- SSH daemon config for clean UTF-8 non-interactive sessions (required by mosh) ----
 # Force UTF-8 and silence all banners/MOTD so the first line is "MOSH CONNECT ..."
 RUN printf '%s\n' \
@@ -75,6 +78,7 @@ RUN set -eux; \
   curl -fsSL "https://go.dev/dl/go${GO_VERSION}.linux-${goarch}.tar.gz" -o /tmp/go.tgz; \
   rm -rf /usr/local/go; \
   tar -C /usr/local -xzf /tmp/go.tgz; \
+  ln -sf /usr/local/go/bin/* /usr/local/bin/; \
   rm /tmp/go.tgz
 
 ENV GOPATH=/root/go
