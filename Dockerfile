@@ -35,8 +35,9 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     ca-certificates curl wget gnupg \
     openssh-server \
     mosh \
-    git nano unzip vim zsh htop rsync tmux gh \
+    git nano unzip vim zsh htop rsync tmux gh ffmpeg \
     build-essential pkg-config gcc g++ make \
+    clang clangd lldb gdb ccache cmake ninja-build \
     python3 python3-pip python3-venv \
     php-cli php-common php-xml php-mbstring php-curl php-zip \
   && rm -rf /var/lib/apt/lists/*
@@ -82,13 +83,25 @@ RUN set -eux; \
   rm /tmp/go.tgz
 
 ENV GOPATH=/root/go
-ENV PATH=/usr/local/go/bin:/root/go/bin:$PATH
+ENV CARGO_HOME=/root/.cargo \
+    RUSTUP_HOME=/root/.rustup \
+    PATH=/root/.cargo/bin:/usr/local/go/bin:/root/go/bin:$PATH
 
 # Common Go tools used by vscode-go
 RUN go version && \
     go install golang.org/x/tools/gopls@latest && \
     go install github.com/go-delve/delve/cmd/dlv@latest && \
     go install honnef.co/go/tools/cmd/staticcheck@latest
+
+# ---- Rust toolchain + components ----
+RUN set -eux; \
+  curl -fsSL https://sh.rustup.rs -o /tmp/rustup-init.sh; \
+  chmod +x /tmp/rustup-init.sh; \
+  /tmp/rustup-init.sh -y --default-toolchain stable --profile minimal --no-modify-path; \
+  rm /tmp/rustup-init.sh; \
+  . /root/.cargo/env; \
+  rustup component add rustfmt clippy; \
+  cargo --version
 
 # ---- Docker CLI (talk to host via mounted /var/run/docker.sock) ----
 RUN set -eux; \
