@@ -122,7 +122,11 @@ RUN set -eux; \
   rm /tmp/rustup-init.sh; \
   . /root/.cargo/env; \
   rustup component add rustfmt clippy; \
-  cargo --version
+  cargo --version; \
+  ln -sf /root/.cargo/bin/cargo /usr/local/bin/cargo; \
+  ln -sf /root/.cargo/bin/rustc /usr/local/bin/rustc; \
+  ln -sf /root/.cargo/bin/rustup /usr/local/bin/rustup; \
+  cargo install ffdash@0.3.0
 
 # ---- Docker CLI (talk to host via mounted /var/run/docker.sock) ----
 RUN set -eux; \
@@ -187,6 +191,12 @@ RUN echo 'export PS1="\[\e[0;32m\]\u@\h:\w# \[\e[0m\]"' >> /root/.bashrc
 # Default bind host/port for code serve-web (overridable at runtime)
 ENV HOST=0.0.0.0
 ENV PORT=8443
+
+# ---- Custom scripts ----
+COPY dmux /usr/local/bin/dmux
+COPY dzellij /usr/local/bin/dzellij
+RUN chmod +x /usr/local/bin/dmux
+RUN chmod +x /usr/local/bin/dzellij
 
 # ---- Startup script ----
 COPY start.sh /usr/local/bin/start.sh

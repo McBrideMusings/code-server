@@ -1,0 +1,38 @@
+#!/usr/bin/env bash
+# Usage: dzellij [path] [session-name]
+# Examples:
+#   dzellij projects/rpg-toolkit rpg-agent
+#   dzellij ~/projects/rpg-toolkit rpg-deploy
+#   dzellij projects/rpg-toolkit  (session name derived from basename)
+#   dzellij  (unnamed session in current directory)
+
+# Parse arguments
+if [ $# -eq 0 ]; then
+    exec zellij
+elif [ $# -eq 1 ]; then
+    DIR="$1"
+    DIR="${DIR/#\~/$HOME}"
+    if [[ "$DIR" != /* ]]; then
+        DIR="$HOME/$DIR"
+    fi
+    if [ ! -d "$DIR" ]; then
+        echo "Error: Directory '$DIR' does not exist" >&2
+        exit 1
+    fi
+    SESSION=$(basename "$DIR")
+else
+    DIR="$1"
+    SESSION="$2"
+    DIR="${DIR/#\~/$HOME}"
+    if [[ "$DIR" != /* ]]; then
+        DIR="$HOME/$DIR"
+    fi
+    if [ ! -d "$DIR" ]; then
+        echo "Error: Directory '$DIR' does not exist" >&2
+        exit 1
+    fi
+fi
+
+# Start or attach to the requested session, creating it in the desired directory
+cd "$DIR"
+exec zellij --session "$SESSION"

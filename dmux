@@ -1,0 +1,56 @@
+#!/usr/bin/env bash
+# Usage: dmux [path] [session-name]
+# Examples:
+#   dmux projects/rpg-toolkit rpg-agent
+#   dmux ~/projects/rpg-toolkit rpg-deploy
+#   dmux projects/rpg-toolkit  (session name derived from basename)
+#   dmux  (unnamed session in current directory)
+
+# Parse arguments
+if [ $# -eq 0 ]; then
+    # No args: create unnamed session in current directory
+    exec tmux new-session
+elif [ $# -eq 1 ]; then
+    # One arg: treat as path, derive session name from basename
+    DIR="$1"
+    # Expand ~ to home directory
+    DIR="${DIR/#\~/$HOME}"
+    # Convert to absolute path if relative
+    if [[ "$DIR" != /* ]]; then
+        DIR="$HOME/$DIR"
+    fi
+    # Validate directory exists
+    if [ ! -d "$DIR" ]; then
+        echo "Error: Directory '$DIR' does not exist" >&2
+        exit 1
+    fi
+    # Derive session name from basename
+    SESSION=$(basename "$DIR")
+else
+    # Two args: path and session name
+    DIR="$1"
+    SESSION="$2"
+    # Expand ~ to home directory
+    DIR="${DIR/#\~/$HOME}"
+    # Convert to absolute path if relative
+    if [[ "$DIR" != /* ]]; then
+        DIR="$HOME/$DIR"
+    fi
+    # Validate directory exists
+    if [ ! -d "$DIR" ]; then
+        echo "Error: Directory '$DIR' does not exist" >&2
+        exit 1
+    fi
+fi
+
+# If session exists, attach to it
+if [ -n "$SESSION" ] && tmux has-session -t "$SESSION" 2>/dev/null; then
+    exec tmux attach -t "$SESSION"
+fi
+
+# Create new session in the specified directory
+if [ -n "$SESSION" ]; then
+    exec tmux new-session -s "$SESSION" -c "$DIR"
+else
+    exec tmux new-session -c "$DIR"
+fi
