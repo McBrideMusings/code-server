@@ -45,6 +45,24 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 # Ensure Git initializes repos with main by default
 RUN git config --global init.defaultBranch main
 
+# ---- Zellij (manual install; not in Debian repos) ----
+ARG ZELLIJ_VERSION=latest
+RUN set -eux; \
+  arch="$(dpkg --print-architecture)"; \
+  case "$arch" in \
+    amd64) targ_arch=x86_64 ;; \
+    arm64) targ_arch=aarch64 ;; \
+    *) echo "unsupported arch: $arch"; exit 1 ;; \
+  esac; \
+  if [ "$ZELLIJ_VERSION" = "latest" ]; then \
+    url="https://github.com/zellij-org/zellij/releases/latest/download/zellij-${targ_arch}-unknown-linux-musl.tar.gz"; \
+  else \
+    url="https://github.com/zellij-org/zellij/releases/download/v${ZELLIJ_VERSION}/zellij-${targ_arch}-unknown-linux-musl.tar.gz"; \
+  fi; \
+  curl -fsSL "$url" -o /tmp/zellij.tgz; \
+  tar -C /usr/local/bin -xzf /tmp/zellij.tgz zellij; \
+  rm /tmp/zellij.tgz
+
 # ---- SSH daemon config for clean UTF-8 non-interactive sessions (required by mosh) ----
 # Force UTF-8 and silence all banners/MOTD so the first line is "MOSH CONNECT ..."
 RUN printf '%s\n' \
