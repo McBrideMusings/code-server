@@ -2,6 +2,14 @@
 FROM debian:bookworm-slim
 
 ENV DEBIAN_FRONTEND=noninteractive
+
+# Enable contrib and non-free repositories for additional packages (nvtop is in contrib)
+RUN printf '%s\n' \
+  'deb http://deb.debian.org/debian bookworm main contrib non-free-firmware' \
+  'deb http://deb.debian.org/debian bookworm-updates main contrib non-free-firmware' \
+  'deb http://security.debian.org bookworm-security main contrib non-free-firmware' \
+  > /etc/apt/sources.list
+
 RUN apt-get update && apt-get install -y --no-install-recommends locales mosh \
  && sed -i 's/^# *\(en_US.UTF-8\) UTF-8/\1 UTF-8/' /etc/locale.gen \
  && locale-gen \
@@ -15,13 +23,7 @@ ENV LANG=en_US.UTF-8 \
 # Ensure root's home subdirs exist so bind-mounts have valid parents
 RUN mkdir -p \
     /root/.ssh \
-    /root/.config/code-server \
-    /root/.local/share/code-server \
-    /root/.codex \
-    /root/.vscode/extensions \
-    /root/.config/Code \
-    /root/.local/share/Code \
- && chmod 700 /root/.ssh
+     && chmod 700 /root/.ssh
 
 # Configure ssh; host keys live under /etc/ssh/keys (persisted at runtime)
 RUN mkdir -p /var/run/sshd /etc/ssh/sshd_config.d /etc/ssh/keys
@@ -36,6 +38,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     openssh-server \
     mosh \
     git nano unzip vim zsh htop rsync tmux gh ffmpeg \
+nvtop intel-gpu-tools \
     build-essential pkg-config gcc g++ make \
     clang clangd lldb gdb ccache cmake ninja-build \
     python3 python3-pip python3-venv \
@@ -131,6 +134,31 @@ RUN set -eux; \
   apt-get install -y --no-install-recommends docker-ce-cli docker-compose-plugin; \
   rm -rf /var/lib/apt/lists/*
 
+# ---- NVIDIA GPU support (nvidia-smi + container toolkit for docker-in-docker GPU access) ----
+RUN set -eux; \
+  curl -fsSL https://nvidia.github.io/libnvidia-container/gpgkey | gpg --dearmor -o /usr/share/keyrings/nvidia-container-toolkit-keyring.gpg; \
+  curl -s -L https://nvidia.github.io/libnvidia-container/stable/deb/nvidia-container-toolkit.list | \
+    sed 's#deb https://#deb [signed-by=/usr/share/keyrings/nvidia-container-toolkit-keyring.gpg] https://#g' | \
+    tee /etc/apt/sources.list.d/nvidia-container-toolkit.list; \
+  apt-get update; \
+  apt-get install -y --no-install-recommends nvidia-container-toolkit; \
+  rm -rf /var/lib/apt/lists/*
+
+# ---- VAAPI support (Intel/AMD hardware video acceleration) ----
+# Install VAAPI packages with error handling - continue build even if some packages fail
+RUN set -eux; \
+  apt-get update; \
+  apt-get install -y --no-install-recommends \
+    vainfo \
+    mesa-va-drivers \
+    libva-drm2 \
+    libva2 || true; \
+  # Try to install Intel drivers separately (may not be available in all repos)
+  apt-get install -y --no-install-recommends \
+    intel-media-va-driver \
+    i965-va-driver || echo "Intel VA drivers not available, continuing without them"; \
+  rm -rf /var/lib/apt/lists/*
+
 # ---- Microsoft VS Code repo + VS Code (provides `code`) ----
 RUN set -eux; \
   install -m 0755 -d /etc/apt/keyrings; \
@@ -145,7 +173,13 @@ RUN set -eux; \
 
 # ---- LLM Coding Tools ----
 RUN npm install -g @openai/codex
-RUN npm install -g @anthropic-ai/claude-code
+RUN npm install -g @google/gemini-cli
+RUN curl -fsSL https://claude.ai/install.sh | bash
+RUN echo 'export PATH="$HOME/.local/bin:$PATH"' >> ~/.bashrc
+RUN printf '%s\n' "alias clr='printf \"\\e[3J\\e[H\\e[2J\"'" >> /root/.bashrc
+
+# Ensure Rust/Cargo and Go paths are available in shell sessions
+RUN echo 'export PATH="/root/.cargo/bin:/usr/local/go/bin:/root/go/bin:$PATH"' >> /root/.bashrc
 
 # Green prompt: root@host:/cwd#
 RUN echo 'export PS1="\[\e[0;32m\]\u@\h:\w# \[\e[0m\]"' >> /root/.bashrc
