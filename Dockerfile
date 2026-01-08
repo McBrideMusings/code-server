@@ -11,19 +11,19 @@ RUN printf '%s\n' \
   > /etc/apt/sources.list
 
 RUN apt-get update && apt-get install -y --no-install-recommends locales mosh \
- && sed -i 's/^# *\(en_US.UTF-8\) UTF-8/\1 UTF-8/' /etc/locale.gen \
- && locale-gen \
- && update-locale LANG=en_US.UTF-8 LC_ALL=en_US.UTF-8 LANGUAGE=en_US:en \
- && rm -rf /var/lib/apt/lists/*
+  && sed -i 's/^# *\(en_US.UTF-8\) UTF-8/\1 UTF-8/' /etc/locale.gen \
+  && locale-gen \
+  && update-locale LANG=en_US.UTF-8 LC_ALL=en_US.UTF-8 LANGUAGE=en_US:en \
+  && rm -rf /var/lib/apt/lists/*
 
 ENV LANG=en_US.UTF-8 \
-    LC_ALL=en_US.UTF-8 \
-    LANGUAGE=en_US:en
+  LC_ALL=en_US.UTF-8 \
+  LANGUAGE=en_US:en
 
 # Ensure root's home subdirs exist so bind-mounts have valid parents
 RUN mkdir -p \
-    /root/.ssh \
-     && chmod 700 /root/.ssh
+  /root/.ssh \
+  && chmod 700 /root/.ssh
 
 # Configure ssh; host keys live under /etc/ssh/keys (persisted at runtime)
 RUN mkdir -p /var/run/sshd /etc/ssh/sshd_config.d /etc/ssh/keys
@@ -34,15 +34,15 @@ RUN printf '%s\n' \
 
 # ---- Base OS + build tools, SSH, editors ----
 RUN apt-get update && apt-get install -y --no-install-recommends \
-    ca-certificates curl wget gnupg \
-    openssh-server \
-    mosh \
-    git nano unzip vim zsh htop rsync tmux gh ffmpeg \
-nvtop intel-gpu-tools \
-    build-essential pkg-config gcc g++ make \
-    clang clangd lldb gdb ccache cmake ninja-build \
-    python3 python3-pip python3-venv \
-    php-cli php-common php-xml php-mbstring php-curl php-zip \
+  ca-certificates curl wget gnupg \
+  openssh-server \
+  mosh \
+  git nano unzip vim zsh htop rsync tmux gh ffmpeg \
+  nvtop intel-gpu-tools \
+  build-essential pkg-config gcc g++ make \
+  clang clangd lldb gdb ccache cmake ninja-build \
+  python3 python3-pip python3-venv \
+  php-cli php-common php-xml php-mbstring php-curl php-zip \
   && rm -rf /var/lib/apt/lists/*
 
 # Ensure Git initializes repos with main by default
@@ -93,9 +93,9 @@ ARG GO_VERSION=1.24.2
 RUN set -eux; \
   arch="$(dpkg --print-architecture)"; \
   case "$arch" in \
-    amd64) goarch=amd64 ;; \
-    arm64) goarch=arm64 ;; \
-    *) echo "unsupported arch: $arch"; exit 1 ;; \
+  amd64) goarch=amd64 ;; \
+  arm64) goarch=arm64 ;; \
+  *) echo "unsupported arch: $arch"; exit 1 ;; \
   esac; \
   curl -fsSL "https://go.dev/dl/go${GO_VERSION}.linux-${goarch}.tar.gz" -o /tmp/go.tgz; \
   rm -rf /usr/local/go; \
@@ -105,14 +105,14 @@ RUN set -eux; \
 
 ENV GOPATH=/root/go
 ENV CARGO_HOME=/root/.cargo \
-    RUSTUP_HOME=/root/.rustup \
-    PATH=/root/.cargo/bin:/usr/local/go/bin:/root/go/bin:$PATH
+  RUSTUP_HOME=/root/.rustup \
+  PATH=/root/.cargo/bin:/usr/local/go/bin:/root/go/bin:$PATH
 
 # Common Go tools used by vscode-go
 RUN go version && \
-    go install golang.org/x/tools/gopls@latest && \
-    go install github.com/go-delve/delve/cmd/dlv@latest && \
-    go install honnef.co/go/tools/cmd/staticcheck@latest
+  go install golang.org/x/tools/gopls@latest && \
+  go install github.com/go-delve/delve/cmd/dlv@latest && \
+  go install honnef.co/go/tools/cmd/staticcheck@latest
 
 # ---- Rust toolchain + components ----
 RUN set -eux; \
@@ -133,7 +133,7 @@ RUN set -eux; \
   install -m 0755 -d /etc/apt/keyrings; \
   curl -fsSL https://download.docker.com/linux/debian/gpg | gpg --dearmor -o /etc/apt/keyrings/docker.gpg; \
   echo "deb [arch=amd64 signed-by=/etc/apt/keyrings/docker.gpg] https://download.docker.com/linux/debian bookworm stable" \
-    > /etc/apt/sources.list.d/docker.list; \
+  > /etc/apt/sources.list.d/docker.list; \
   apt-get update; \
   apt-get install -y --no-install-recommends docker-ce-cli docker-compose-plugin; \
   rm -rf /var/lib/apt/lists/*
@@ -167,10 +167,10 @@ RUN set -eux; \
 RUN set -eux; \
   install -m 0755 -d /etc/apt/keyrings; \
   curl -fsSL https://packages.microsoft.com/keys/microsoft.asc \
-    | gpg --dearmor -o /etc/apt/keyrings/microsoft.gpg; \
+  | gpg --dearmor -o /etc/apt/keyrings/microsoft.gpg; \
   chmod 644 /etc/apt/keyrings/microsoft.gpg; \
   echo "deb [arch=$(dpkg --print-architecture) signed-by=/etc/apt/keyrings/microsoft.gpg] https://packages.microsoft.com/repos/code stable main" \
-    > /etc/apt/sources.list.d/vscode.list; \
+  > /etc/apt/sources.list.d/vscode.list; \
   apt-get update; \
   apt-get install -y --no-install-recommends code; \
   rm -rf /var/lib/apt/lists/*
