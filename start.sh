@@ -54,7 +54,7 @@ cat >/etc/ssh/sshd_config.d/10-auth.conf <<'EOF'
 PermitRootLogin yes
 PasswordAuthentication no
 PubkeyAuthentication yes
-AuthorizedKeysFile .ssh/authorized_keys .ssh/authorized_keys2
+AuthorizedKeysFile /etc/ssh/authorized_keys /etc/ssh/authorized_keys2
 # Accept host-managed authorized_keys without strict permission checks
 StrictModes no
 EOF

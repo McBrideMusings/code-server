@@ -20,10 +20,7 @@ ENV LANG=en_US.UTF-8 \
   LC_ALL=en_US.UTF-8 \
   LANGUAGE=en_US:en
 
-# Ensure root's home subdirs exist so bind-mounts have valid parents
-RUN mkdir -p \
-  /root/.ssh \
-  && chmod 700 /root/.ssh
+# SSH will use /etc/ssh/authorized_keys, so no need for /root/.ssh creation
 
 # Configure ssh; host keys live under /etc/ssh/keys (persisted at runtime)
 RUN mkdir -p /var/run/sshd /etc/ssh/sshd_config.d /etc/ssh/keys
@@ -75,9 +72,6 @@ RUN printf '%s\n' \
   'PrintLastLog no' \
   'UsePAM no' \
   > /etc/ssh/sshd_config.d/99-mosh-locale.conf
-
-# Ensure .bashrc does nothing for non-interactive shells (no extra output)
-RUN printf '%s\n' 'case $- in *i*) ;; *) return ;; esac' >> /root/.bashrc
 
 # ---- Node.js (NodeSource LTS 20) + global tooling ----
 RUN set -eux; \
@@ -178,15 +172,46 @@ RUN set -eux; \
 # ---- LLM Coding Tools ----
 RUN npm install -g @openai/codex
 RUN npm install -g @google/gemini-cli
-RUN curl -fsSL https://claude.ai/install.sh | bash
-RUN echo 'export PATH="$HOME/.local/bin:$PATH"' >> ~/.bashrc
-RUN printf '%s\n' "alias clr='printf \"\\e[3J\\e[H\\e[2J\"'" >> /root/.bashrc
+RUN curl -fsSL https://claude.ai/install.sh | bash && \
+    mv ~/.local/bin/claude /usr/local/bin/claude
+RUN curl -fsSL https://opencode.ai/install | bash
 
-# Ensure Rust/Cargo and Go paths are available in shell sessions
-RUN echo 'export PATH="/root/.cargo/bin:/usr/local/go/bin:/root/go/bin:$PATH"' >> /root/.bashrc
+# Container-managed bash configuration (survives home directory mount)
+RUN printf '%s\n' \
+  '# Container-managed environment' \
+  'export PATH="/root/.local/bin:/root/.cargo/bin:/usr/local/go/bin:/root/go/bin:$PATH"' \
+  'export PS1="\[\e]0;\u@\h: \w\a\]\[\033[01;32m\]\u@\h\[\033[00m\]:\[\033[01;34m\]\w\[\033[00m\]\$ "' \
+  > /etc/container-bashrc
 
-# Green prompt: root@host:/cwd#
-RUN echo 'export PS1="\[\e[0;32m\]\u@\h:\w# \[\e[0m\]"' >> /root/.bashrc
+# Also put in profile.d for login shells (SSH)
+RUN cp /etc/container-bashrc /etc/profile.d/container-env.sh
+
+# Force it into bash.bashrc for all bash sessions
+RUN cat /etc/container-bashrc >> /etc/bash.bashrc
+
+# Set BASH_ENV so all bash shells source container config first
+ENV BASH_ENV="/etc/container-bashrc"
+
+# Validate LLM tool installations
+RUN echo "=== Validating LLM Tool Installations ===" && \
+    echo "Checking codex..." && \
+    (which codex && echo "✓ codex found in PATH" || echo "✗ codex NOT found in PATH") && \
+    echo "Checking gemini..." && \
+    (which gemini && echo "✓ gemini found in PATH" || echo "✗ gemini NOT found in PATH") && \
+    echo "Checking claude..." && \
+    (which claude && echo "✓ claude found in PATH" || echo "✗ claude NOT found in PATH") && \
+    echo "Checking opencode..." && \
+    (which opencode && echo "✓ opencode found in PATH" || echo "✗ opencode NOT found in PATH") && \
+    echo "Current PATH: $PATH" && \
+    echo "Searching for missing binaries..." && \
+    (find /usr /home /root /opt -name "codex" -type f 2>/dev/null | head -3 || echo "codex binary not found anywhere") && \
+    (find /usr /home /root /opt -name "gemini" -type f 2>/dev/null | head -3 || echo "gemini binary not found anywhere") && \
+    (find /usr /home /root /opt -name "claude" -type f 2>/dev/null | head -3 || echo "claude binary not found anywhere") && \
+    (find /usr /home /root /opt -name "opencode" -type f 2>/dev/null | head -3 || echo "opencode binary not found anywhere") && \
+    echo "=== End Validation ==="
+
+# Note: Shell configuration (.bashrc, .bash_profile) handled by mounted home directory
+# /mnt/user/appdata/code-server/home:/root contains persistent shell config files
 
 # Default bind host/port for code serve-web (overridable at runtime)
 ENV HOST=0.0.0.0
