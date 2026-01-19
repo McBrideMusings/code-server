@@ -98,9 +98,9 @@ RUN set -eux; \
   rm /tmp/go.tgz
 
 ENV GOPATH=/root/go
-ENV CARGO_HOME=/root/.cargo \
-  RUSTUP_HOME=/root/.rustup \
-  PATH=/root/.cargo/bin:/usr/local/go/bin:/root/go/bin:$PATH
+ENV CARGO_HOME=/usr/local/cargo \
+  RUSTUP_HOME=/usr/local/rustup \
+  PATH=/usr/local/cargo/bin:/usr/local/go/bin:/root/go/bin:$PATH
 
 # Common Go tools used by vscode-go
 RUN go version && \
@@ -109,17 +109,14 @@ RUN go version && \
   go install honnef.co/go/tools/cmd/staticcheck@latest
 
 # ---- Rust toolchain + components ----
+# CARGO_HOME and RUSTUP_HOME are set above to /usr/local paths so Rust survives home mount
 RUN set -eux; \
   curl -fsSL https://sh.rustup.rs -o /tmp/rustup-init.sh; \
   chmod +x /tmp/rustup-init.sh; \
   /tmp/rustup-init.sh -y --default-toolchain stable --profile minimal --no-modify-path; \
   rm /tmp/rustup-init.sh; \
-  . /root/.cargo/env; \
   rustup component add rustfmt clippy; \
   cargo --version; \
-  ln -sf /root/.cargo/bin/cargo /usr/local/bin/cargo; \
-  ln -sf /root/.cargo/bin/rustc /usr/local/bin/rustc; \
-  ln -sf /root/.cargo/bin/rustup /usr/local/bin/rustup; \
   cargo install ffdash@0.3.0
 
 # ---- Docker CLI (talk to host via mounted /var/run/docker.sock) ----
@@ -179,7 +176,7 @@ RUN curl -fsSL https://opencode.ai/install | bash
 # Container-managed bash configuration (survives home directory mount)
 RUN printf '%s\n' \
   '# Container-managed environment' \
-  'export PATH="/root/.local/bin:/root/.cargo/bin:/usr/local/go/bin:/root/go/bin:$PATH"' \
+  'export PATH="/root/.local/bin:/usr/local/cargo/bin:/usr/local/go/bin:/root/go/bin:$PATH"' \
   'export PS1="\[\e]0;\u@\h: \w\a\]\[\033[01;32m\]\u@\h\[\033[00m\]:\[\033[01;34m\]\w\[\033[00m\]\$ "' \
   > /etc/container-bashrc
 
