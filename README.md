@@ -1,6 +1,9 @@
 # Code Server Development Container
 
-A comprehensive development environment container based on Debian Bookworm with VS Code Server, SSH access, and extensive tooling for modern software development.
+A comprehensive development environment container based on Debian Bookworm with VS Code Server, SSH access, and extensive tooling for modern software development. 
+
+# Disclaimer
+This was made for my needs specifically. I'd recommend this be a baseline for a custom docker container, if this looks useful to you, over one you try to run directly. I don't have any checks for what tools you want, nor do I have checks for hardware like GPUs. I make no gurentte but it's proven very useful for me and the ssh work to persist and share keys with the host is extremely helpful
 
 ## Features
 
@@ -10,17 +13,6 @@ A comprehensive development environment container based on Debian Bookworm with 
 - **AI Coding Tools**: Claude, OpenAI Codex, Gemini, OpenCode integration
 - **GPU Support**: NVIDIA CUDA and Intel/AMD VAAPI hardware acceleration
 - **Development Tools**: Docker, Git, tmux, zellij, and comprehensive build toolchain
-
-## Quick Start
-
-1. **Build and Run**:
-   ```bash
-   ./run-dev.sh
-   ```
-
-2. **Access Methods**:
-   - **Web Interface**: `https://<your-ip>:<port>`
-   - **SSH**: `ssh root@<your-ip> -p <ssh-port>`
 
 ## Architecture
 
