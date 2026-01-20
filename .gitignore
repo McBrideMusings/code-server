@@ -1,2 +1,4 @@
 compose.dev.yaml
 run.sh
+container-root
+.claude/*

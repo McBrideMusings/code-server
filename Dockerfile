@@ -34,7 +34,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
   ca-certificates curl wget gnupg \
   openssh-server \
   mosh \
-  git nano unzip vim zsh htop rsync tmux gh ffmpeg \
+  git nano unzip vim zsh htop rsync tmux gh \
   nvtop intel-gpu-tools \
   build-essential pkg-config gcc g++ make \
   clang clangd lldb gdb ccache cmake ninja-build \
@@ -115,6 +115,7 @@ RUN set -eux; \
   chmod +x /tmp/rustup-init.sh; \
   /tmp/rustup-init.sh -y --default-toolchain stable --profile minimal --no-modify-path; \
   rm /tmp/rustup-init.sh; \
+  rustup default stable; \
   rustup component add rustfmt clippy; \
   cargo --version; \
   cargo install ffdash@0.3.0
@@ -139,6 +140,13 @@ RUN set -eux; \
   apt-get install -y --no-install-recommends nvidia-container-toolkit; \
   rm -rf /var/lib/apt/lists/*
 
+# Enable NVIDIA capabilities (required for NVENC and nvidia-smi)
+# - compute: CUDA compute
+# - utility: nvidia-smi and other utilities
+# - video: NVENC/NVDEC video encoding/decoding
+ENV NVIDIA_VISIBLE_DEVICES=all
+ENV NVIDIA_DRIVER_CAPABILITIES=compute,utility,video
+
 # ---- VAAPI support (Intel/AMD hardware video acceleration) ----
 # Install VAAPI packages with error handling - continue build even if some packages fail
 RUN set -eux; \
@@ -152,6 +160,18 @@ RUN set -eux; \
   apt-get install -y --no-install-recommends \
     intel-media-va-driver \
     i965-va-driver || echo "Intel VA drivers not available, continuing without them"; \
+  rm -rf /var/lib/apt/lists/*
+
+# ---- FFmpeg with NVENC support from Jellyfin (recommended for GPU encoding) ----
+RUN set -eux; \
+  apt-get update; \
+  apt-get install -y --no-install-recommends curl gpg; \
+  curl -fsSL https://repo.jellyfin.org/install-debuntu.sh | bash; \
+  apt-get update; \
+  apt-get install -y --no-install-recommends jellyfin-ffmpeg6; \
+  # Create symbolic links for standard ffmpeg/ffprobe commands
+  ln -sf /usr/lib/jellyfin-ffmpeg/ffmpeg /usr/local/bin/ffmpeg; \
+  ln -sf /usr/lib/jellyfin-ffmpeg/ffprobe /usr/local/bin/ffprobe; \
   rm -rf /var/lib/apt/lists/*
 
 # ---- Microsoft VS Code repo + VS Code (provides `code`) ----
@@ -178,6 +198,8 @@ RUN printf '%s\n' \
   '# Container-managed environment' \
   'export PATH="/root/.local/bin:/usr/local/cargo/bin:/usr/local/go/bin:/root/go/bin:$PATH"' \
   'export PS1="\[\e]0;\u@\h: \w\a\]\[\033[01;32m\]\u@\h\[\033[00m\]:\[\033[01;34m\]\w\[\033[00m\]\$ "' \
+  '# Ensure Rust toolchain is configured' \
+  'rustup default stable >/dev/null 2>&1 || true' \
   > /etc/container-bashrc
 
 # Also put in profile.d for login shells (SSH)
@@ -207,6 +229,16 @@ RUN echo "=== Validating LLM Tool Installations ===" && \
     (find /usr /home /root /opt -name "opencode" -type f 2>/dev/null | head -3 || echo "opencode binary not found anywhere") && \
     echo "=== End Validation ==="
 
+# Validate FFmpeg NVENC support
+RUN echo "=== Validating FFmpeg NVENC Support ===" && \
+    ffmpeg -version && \
+    echo "Available NVENC encoders:" && \
+    ffmpeg -encoders 2>/dev/null | grep nvenc && \
+    echo "✓ NVENC support confirmed" && \
+    echo "Checking NVIDIA video libraries (requires runtime with GPU access):" && \
+    (ldconfig -p | grep libnvidia-encode || echo "⚠ NVIDIA video libraries not found - requires GPU runtime") && \
+    echo "=== End FFmpeg Validation ==="
+
 # Note: Shell configuration (.bashrc, .bash_profile) handled by mounted home directory
 # /mnt/user/appdata/code-server/home:/root contains persistent shell config files
 
@@ -215,13 +247,13 @@ ENV HOST=0.0.0.0
 ENV PORT=8443
 
 # ---- Custom scripts ----
-COPY dmux /usr/local/bin/dmux
-COPY dzellij /usr/local/bin/dzellij
+COPY scripts/dmux /usr/local/bin/dmux
+COPY scripts/dzellij /usr/local/bin/dzellij
 RUN chmod +x /usr/local/bin/dmux
 RUN chmod +x /usr/local/bin/dzellij
 
 # ---- Startup script ----
-COPY start.sh /usr/local/bin/start.sh
+COPY boot/start.sh /usr/local/bin/start.sh
 RUN chmod +x /usr/local/bin/start.sh
 
 EXPOSE 8443 22
