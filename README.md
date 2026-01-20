@@ -19,15 +19,14 @@ A comprehensive development environment container based on Debian Bookworm with 
    ```
 
 2. **Access Methods**:
-   - **Web Interface**: `https://100.114.249.118:8443`
-   - **SSH**: `ssh root@100.114.249.118 -p 2222`
-   - **Local**: `https://localhost:9443` (with profile.local.sh)
+   - **Web Interface**: `https://<your-ip>:<port>`
+   - **SSH**: `ssh root@<your-ip> -p <ssh-port>`
 
 ## Architecture
 
 ### Volume Strategy
 The container uses a hybrid mounting approach:
-- **Full home persistence**: `/mnt/user/appdata/code-server/home:/root`
+- **Full home persistence**: `/mount/point:/root`
 - **Symlinked workspaces**: Host directories symlinked into container home
 - **System-wide configuration**: Shell/PATH managed by container, data persisted on host
 
@@ -40,8 +39,6 @@ The container uses a hybrid mounting approach:
 
 ```
 /root/                          # Mounted from host for persistence
-├── projects/                   # → /mnt/user/storage/projects/
-├── user-scripts/               # → /boot/config/plugins/user.scripts/scripts/
 ├── .bash_history              # Persistent command history
 ├── .gitconfig                 # Persistent git configuration
 └── .ssh/                      # SSH client keys
@@ -69,15 +66,11 @@ The container uses a hybrid mounting approach:
 
 ## Network Configuration
 
-### Production (profile.dev.sh)
-- **VS Code**: `100.114.249.118:8443`
-- **SSH**: `100.114.249.118:2222`
+### Default Ports
+- **VS Code**: `8443` (HTTPS web interface)
+- **SSH**: `2222` (mapped to container port 22)
 - **Dev Ports**: `3300-3399` for application development
 - **UDP**: `60000-60020` for specialized protocols
-
-### Local Development (profile.local.sh)
-- **VS Code**: `localhost:9443`
-- Minimal port exposure for local testing
 
 ## GPU Support
 
@@ -98,7 +91,7 @@ The container includes multiple AI coding assistants. See [AGENTS.md](./AGENTS.m
 ## SSH Configuration
 
 ### Host Key Persistence
-SSH host keys are generated once and persisted in `/mnt/user/appdata/code-server/ssh/`. This prevents SSH client warnings on container rebuilds.
+SSH host keys are generated once and persisted in a host-mounted volume. This prevents SSH client warnings on container rebuilds.
 
 ### Authentication
 - **Key-based**: Authorized keys mounted from host
@@ -119,27 +112,49 @@ The container manages shell configuration through multiple layers:
 - User customizations can be added to mounted home directory
 - Git configuration persists across rebuilds
 
-## Customization
+## Sample Compose File
 
-### Adding Tools
-Add package installations to the appropriate section in `Dockerfile`:
-```dockerfile
-RUN apt-get install -y your-package
-```
+```yaml
+services:
+  code-server:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: code-server:latest
+    container_name: code-server
+    hostname: dev-server
+    user: root
+    restart: unless-stopped
 
-### Environment Variables
-Set in the profile files:
-```bash
-ENVS=$(cat <<'EOF'
-YOUR_VAR=value
-EOF
-)
-```
+    environment:
+      - GIT_USER=your-username
+      - GIT_EMAIL=your@email.com
+      - SERVER_DATA_DIR=/root/.vscode-server
 
-### Volume Mounts
-Add to profile `VOLUMES` section:
-```bash
-/host/path:/container/path
+    ports:
+      - "8443:8443"
+      - "2222:22"
+      - "3300-3399:3300-3399"
+      - "60000-60020:60000-60020/udp"
+
+    volumes:
+      - /path/to/home:/root
+      - /path/to/ssh-keys:/etc/ssh/keys
+      - ~/.ssh/authorized_keys:/etc/ssh/authorized_keys:ro
+      - /var/run/docker.sock:/var/run/docker.sock
+
+    # GPU support: NVIDIA
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: all
+              capabilities: [gpu]
+
+    # VAAPI (Intel/AMD hardware acceleration)
+    devices:
+      - /dev/dri:/dev/dri
 ```
 
 ## Troubleshooting
@@ -147,7 +162,7 @@ Add to profile `VOLUMES` section:
 ### SSH Host Key Changes
 If you see SSH host key warnings:
 ```bash
-ssh-keygen -R "[100.114.249.118]:2222"
+ssh-keygen -R "[<your-ip>]:2222"
 ```
 
 ### Missing Tools in PATH
@@ -174,9 +189,9 @@ vainfo                  # Intel/AMD
 ## Backup Strategy
 
 ### Critical Persisted Data
-- `/mnt/user/appdata/code-server/home/`: All user data and history
-- `/mnt/user/appdata/code-server/ssh/`: SSH host keys
-- `/mnt/user/storage/projects/`: Source code and projects
+- Home directory mount: All user data and history
+- SSH keys mount: SSH host keys
+- Projects mount: Source code and projects
 
 ### Rebuild Safety
 The container can be rebuilt without data loss. All critical configuration and data persists on the host filesystem.
