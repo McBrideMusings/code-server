@@ -44,6 +44,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 
 # Ensure Git initializes repos with main by default
 RUN git config --global init.defaultBranch main
+RUN git config --global --add safe.directory '*'
 
 # ---- Zellij (manual install; not in Debian repos) ----
 ARG ZELLIJ_VERSION=latest
@@ -81,6 +82,32 @@ RUN set -eux; \
   corepack enable; \
   npm i -g typescript eslint npm-check-updates; \
   rm -rf /var/lib/apt/lists/*
+
+# ---- Playwright browser automation framework ----
+# Install system dependencies for Playwright browsers (Chromium, Firefox, WebKit)
+RUN apt-get update && apt-get install -y --no-install-recommends \
+  # Core browser dependencies
+  libnss3 libnspr4 libatk1.0-0 libatk-bridge2.0-0 libcups2 \
+  libdrm2 libdbus-1-3 libxkbcommon0 libxcomposite1 libxdamage1 \
+  libxfixes3 libxrandr2 libgbm1 libpango-1.0-0 libcairo2 \
+  libasound2 libatspi2.0-0 libxshmfence1 \
+  # X11 and rendering libraries
+  libx11-6 libx11-xcb1 libxcb1 libxext6 libxcb-shm0 \
+  # Font support (Debian Bookworm naming)
+  fonts-liberation fonts-noto-color-emoji fonts-noto-cjk \
+  # Media codecs and GTK
+  libvpx7 libwebpdemux2 libwebp7 libenchant-2-2 libsecret-1-0 \
+  libhyphen0 libgdk-pixbuf2.0-0 libgtk-3-0 libharfbuzz-icu0 \
+  libgstreamer1.0-0 libgstreamer-plugins-base1.0-0 \
+  # Utilities
+  xvfb \
+  && rm -rf /var/lib/apt/lists/*
+
+# Install Playwright globally with all browsers for quick testing
+# Projects should still install Playwright locally via package.json for version control
+RUN npm install -g playwright@latest && \
+  playwright install chromium firefox webkit && \
+  rm -rf /root/.cache/ms-playwright/ffmpeg*
 
 # ---- Go toolchain + common tools for vscode-go ----
 ARG GO_VERSION=1.24.2
@@ -238,6 +265,14 @@ RUN echo "=== Validating FFmpeg NVENC Support ===" && \
     echo "Checking NVIDIA video libraries (requires runtime with GPU access):" && \
     (ldconfig -p | grep libnvidia-encode || echo "⚠ NVIDIA video libraries not found - requires GPU runtime") && \
     echo "=== End FFmpeg Validation ==="
+
+# Validate Playwright installation
+RUN echo "=== Validating Playwright Installation ===" && \
+    playwright --version && \
+    echo "Installed browsers:" && \
+    ls -la /root/.cache/ms-playwright/ && \
+    echo "✓ Playwright configured successfully" && \
+    echo "=== End Playwright Validation ==="
 
 # Note: Shell configuration (.bashrc, .bash_profile) handled by mounted home directory
 # /mnt/user/appdata/code-server/home:/root contains persistent shell config files
