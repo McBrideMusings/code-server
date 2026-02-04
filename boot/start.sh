@@ -73,6 +73,13 @@ fi
 mkdir -p /var/run/sshd
 /usr/sbin/sshd -e
 
+# Start opencode web server in background
+echo "Starting opencode web on port 8444..."
+opencode web --port 8444 --hostname 0.0.0.0 &
+
+echo "Starting openchamber web on port 8445..."
+openchamber --port 8445 &
+
 # VS Code Web
 HOST="${HOST:-0.0.0.0}"
 PORT="${PORT:-8333}"

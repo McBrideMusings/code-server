@@ -214,11 +214,21 @@ RUN set -eux; \
   rm -rf /var/lib/apt/lists/*
 
 # ---- LLM Coding Tools ----
+# Use system location for pnpm to survive home directory mount
+ENV PNPM_HOME=/usr/local/share/pnpm
+ENV PATH="$PNPM_HOME:$PATH"
+
 RUN npm install -g @openai/codex
 RUN npm install -g @google/gemini-cli
 RUN curl -fsSL https://claude.ai/install.sh | bash && \
     mv ~/.local/bin/claude /usr/local/bin/claude
-RUN curl -fsSL https://opencode.ai/install | bash
+RUN curl -fsSL https://opencode.ai/install | bash && \
+    . ~/.bashrc && \
+    cp "$(which opencode)" /usr/local/bin/opencode
+RUN mkdir -p "$PNPM_HOME" && \
+    pnpm add -g @openchamber/web && \
+    ln -sf "$PNPM_HOME/openchamber" /usr/local/bin/openchamber
+RUN cd "$(pnpm root -g)/@openchamber/web" && npm install node-pty --build-from-source
 
 # Container-managed bash configuration (survives home directory mount)
 RUN printf '%s\n' \
@@ -280,6 +290,7 @@ RUN echo "=== Validating Playwright Installation ===" && \
 # Default bind host/port for code serve-web (overridable at runtime)
 ENV HOST=0.0.0.0
 ENV PORT=8443
+ENV SHELL=/bin/bash
 
 # ---- Custom scripts ----
 COPY scripts/dmux /usr/local/bin/dmux
@@ -291,7 +302,7 @@ RUN chmod +x /usr/local/bin/dzellij
 COPY boot/start.sh /usr/local/bin/start.sh
 RUN chmod +x /usr/local/bin/start.sh
 
-EXPOSE 8443 22
+EXPOSE 8443 8444 8445 22
 EXPOSE 3300-3399
 EXPOSE 60000-60020/udp
 USER root
