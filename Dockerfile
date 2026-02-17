@@ -40,6 +40,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
   clang clangd lldb gdb ccache cmake ninja-build \
   python3 python3-pip python3-venv \
   php-cli php-common php-xml php-mbstring php-curl php-zip \
+  libpam0g-dev \
   && rm -rf /var/lib/apt/lists/*
 
 # Ensure Git initializes repos with main by default
@@ -64,6 +65,24 @@ RUN set -eux; \
   tar -C /usr/local/bin -xzf /tmp/zellij.tgz zellij; \
   rm /tmp/zellij.tgz
 
+# ---- GitUI (terminal UI for Git) ----
+ARG GITUI_VERSION=latest
+RUN set -eux; \
+  arch="$(dpkg --print-architecture)"; \
+  case "$arch" in \
+    amd64) targ_arch=x86_64 ;; \
+    arm64) targ_arch=aarch64 ;; \
+    *) echo "unsupported arch: $arch"; exit 1 ;; \
+  esac; \
+  if [ "$GITUI_VERSION" = "latest" ]; then \
+    url="https://github.com/gitui-org/gitui/releases/latest/download/gitui-linux-${targ_arch}.tar.gz"; \
+  else \
+    url="https://github.com/gitui-org/gitui/releases/download/v${GITUI_VERSION}/gitui-linux-${targ_arch}.tar.gz"; \
+  fi; \
+  curl -fsSL "$url" -o /tmp/gitui.tgz; \
+  tar -C /usr/local/bin -xzf /tmp/gitui.tgz ./gitui; \
+  rm /tmp/gitui.tgz
+
 # ---- SSH daemon config for clean UTF-8 non-interactive sessions (required by mosh) ----
 # Force UTF-8 and silence all banners/MOTD so the first line is "MOSH CONNECT ..."
 RUN printf '%s\n' \
@@ -74,10 +93,10 @@ RUN printf '%s\n' \
   'UsePAM no' \
   > /etc/ssh/sshd_config.d/99-mosh-locale.conf
 
-# ---- Node.js (NodeSource LTS 20) + global tooling ----
+# ---- Node.js (NodeSource LTS 22) + global tooling ----
 RUN set -eux; \
   apt-get update; apt-get install -y --no-install-recommends ca-certificates curl gnupg; \
-  curl -fsSL https://deb.nodesource.com/setup_20.x | bash -; \
+  curl -fsSL https://deb.nodesource.com/setup_22.x | bash -; \
   apt-get install -y --no-install-recommends nodejs; \
   corepack enable; \
   npm i -g typescript eslint npm-check-updates; \
@@ -247,6 +266,13 @@ RUN cat /etc/container-bashrc >> /etc/bash.bashrc
 
 # Set BASH_ENV so all bash shells source container config first
 ENV BASH_ENV="/etc/container-bashrc"
+
+# ---- VS Code remote helpers (code / codeweb aliases) ----
+# Loaded only for interactive shells (profile.d + bash.bashrc), NOT via BASH_ENV,
+# so the startup script's `code serve-web` still reaches the real binary.
+COPY scripts/vscode-remote.sh /etc/vscode-remote.sh
+RUN cp /etc/vscode-remote.sh /etc/profile.d/vscode-remote.sh && \
+    cat /etc/vscode-remote.sh >> /etc/bash.bashrc
 
 # Validate LLM tool installations
 RUN echo "=== Validating LLM Tool Installations ===" && \
