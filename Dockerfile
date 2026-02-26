@@ -83,6 +83,19 @@ RUN set -eux; \
   tar -C /usr/local/bin -xzf /tmp/gitui.tgz ./gitui; \
   rm /tmp/gitui.tgz
 
+# ---- tsshd (UDP SSH server for roaming connections, like mosh but full SSH) ----
+ARG TSSHD_VERSION=0.1.6
+RUN set -eux; \
+  arch="$(dpkg --print-architecture)"; \
+  case "$arch" in \
+    amd64) targ_arch=x86_64 ;; \
+    arm64) targ_arch=aarch64 ;; \
+    *) echo "unsupported arch: $arch"; exit 1 ;; \
+  esac; \
+  curl -fsSL "https://github.com/trzsz/tsshd/releases/download/v${TSSHD_VERSION}/tsshd_${TSSHD_VERSION}_linux_${targ_arch}.tar.gz" -o /tmp/tsshd.tgz; \
+  tar -C /usr/local/bin --strip-components=1 -xzf /tmp/tsshd.tgz; \
+  rm /tmp/tsshd.tgz
+
 # ---- SSH daemon config for clean UTF-8 non-interactive sessions (required by mosh) ----
 # Force UTF-8 and silence all banners/MOTD so the first line is "MOSH CONNECT ..."
 RUN printf '%s\n' \
