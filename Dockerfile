@@ -176,8 +176,7 @@ RUN set -eux; \
   rm /tmp/rustup-init.sh; \
   rustup default stable; \
   rustup component add rustfmt clippy; \
-  cargo --version; \
-  cargo install ffdash@0.3.0
+  cargo --version
 
 # ---- Docker CLI (talk to host via mounted /var/run/docker.sock) ----
 RUN set -eux; \
