@@ -30,8 +30,7 @@ The container runs several concurrent services, all managed from `boot/start.sh`
 1. **SSH daemon** — key-based auth only, host keys persisted via volume mount
 2. **OpenCode web** — port 8444
 3. **OpenChamber web** — port 8445
-4. **VibeTunnel** — port 4020, web-based terminal
-5. **VS Code Server** (`code serve-web`) — primary process (runs via `exec`, port 8443)
+4. **VS Code Server** (`code serve-web`) — primary process (runs via `exec`, port 8443)
 
 ### Volume Strategy (Hybrid Mounting)
 
@@ -65,7 +64,6 @@ Because `/root` is a host mount, shell configuration uses a layered approach:
 | 8443 | VS Code Server (HTTPS) |
 | 8444 | OpenCode web |
 | 8445 | OpenChamber web |
-| 4020 | VibeTunnel |
 | 22 (→ 2222) | SSH |
 | 3300-3399 | Development use |
 | 60000-60020/udp | mosh |
@@ -74,7 +72,7 @@ Because `/root` is a host mount, shell configuration uses a layered approach:
 
 | File | Purpose |
 |---|---|
-| `Dockerfile` | Full image definition (~339 lines), all tooling installed here |
+| `Dockerfile` | Full image definition (~347 lines), all tooling installed here |
 | `boot/start.sh` | Container entrypoint — SSH, background services, VS Code launch |
 | `run.sh` | Convenience script: build image + run container with volume/port args |
 | `compose.dev.yaml` | Docker Compose definition for development |

@@ -44,7 +44,7 @@ The container uses a hybrid mounting approach:
 ### Programming Languages
 - **Go**: Latest with gopls, dlv, staticcheck
 - **Rust**: Latest stable with rustfmt, clippy, cargo
-- **Node.js**: LTS 20 with TypeScript, ESLint
+- **Node.js**: LTS 22 with TypeScript, ESLint
 - **Python**: 3.x with pip, venv support
 - **PHP**: CLI with common extensions
 - **C/C++**: GCC, Clang, CMake, Ninja
@@ -60,9 +60,11 @@ The container uses a hybrid mounting approach:
 
 ### Default Ports
 - **VS Code**: `8443` (HTTPS web interface)
+- **OpenCode**: `8444` (web interface)
+- **OpenChamber**: `8445` (web interface)
 - **SSH**: `2222` (mapped to container port 22)
 - **Dev Ports**: `3300-3399` for application development
-- **UDP**: `60000-60020` for specialized protocols
+- **UDP**: `60000-60020` for mosh
 
 ## GPU Support
 
@@ -78,7 +80,7 @@ The container uses a hybrid mounting approach:
 
 ## AI Coding Integration
 
-The container includes multiple AI coding assistants. See [AGENTS.md](./AGENTS.md) for detailed configuration and usage.
+The container includes multiple AI coding assistants: Claude Code, OpenAI Codex, Google Gemini, OpenCode, and OpenChamber. All are installed globally and moved to `/usr/local/bin/` so they survive the home directory mount.
 
 ## SSH Configuration
 
