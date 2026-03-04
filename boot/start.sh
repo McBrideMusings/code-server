@@ -10,6 +10,13 @@ if [ "$(id -u)" -ne 0 ]; then
   exit 1
 fi
 
+# Start ssh-agent so tools like gitui can access SSH keys
+eval "$(ssh-agent -s)"
+for key in /root/.ssh/id_*; do
+  [ -f "$key" ] && [[ "$key" != *.pub ]] && ssh-add "$key" 2>/dev/null || true
+done
+export SSH_AUTH_SOCK SSH_AGENT_PID
+
 # Configure global git identity if provided
 if command -v git >/dev/null 2>&1; then
   if [ -n "${GIT_USER:-}" ]; then
