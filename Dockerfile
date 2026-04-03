@@ -257,10 +257,6 @@ RUN curl -fsSL https://claude.ai/install.sh | bash && \
 RUN curl -fsSL https://opencode.ai/install | bash && \
     . ~/.bashrc && \
     cp "$(which opencode)" /usr/local/bin/opencode
-RUN mkdir -p "$PNPM_HOME" && \
-    pnpm add -g @openchamber/web && \
-    ln -sf "$PNPM_HOME/openchamber" /usr/local/bin/openchamber
-RUN cd "$(pnpm root -g)/@openchamber/web" && npm install node-pty --build-from-source
 
 # Container-managed bash configuration (survives home directory mount)
 RUN printf '%s\n' \
