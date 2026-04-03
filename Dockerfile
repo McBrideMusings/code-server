@@ -33,6 +33,7 @@ RUN printf '%s\n' \
 RUN apt-get update && apt-get install -y --no-install-recommends \
   ca-certificates curl wget gnupg \
   openssh-server \
+  bubblewrap \
   mosh \
   git jq nano unzip vim zsh htop rsync tmux gh \
   nvtop intel-gpu-tools \
