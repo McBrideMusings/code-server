@@ -116,6 +116,20 @@ RUN set -eux; \
   npm i -g typescript eslint npm-check-updates; \
   rm -rf /var/lib/apt/lists/*
 
+# ---- Bun (fast JS runtime, bundler, package manager) ----
+RUN set -eux; \
+  arch="$(dpkg --print-architecture)"; \
+  case "$arch" in \
+    amd64) bun_arch=x64 ;; \
+    arm64) bun_arch=aarch64 ;; \
+    *) echo "unsupported arch: $arch"; exit 1 ;; \
+  esac; \
+  curl -fsSL "https://github.com/oven-sh/bun/releases/latest/download/bun-linux-${bun_arch}.zip" -o /tmp/bun.zip; \
+  unzip -j /tmp/bun.zip "bun-linux-${bun_arch}/bun" -d /usr/local/bin; \
+  chmod +x /usr/local/bin/bun; \
+  rm /tmp/bun.zip; \
+  bun --version
+
 # ---- Playwright browser automation framework ----
 # Install system dependencies for Playwright browsers (Chromium, Firefox, WebKit)
 RUN apt-get update && apt-get install -y --no-install-recommends \
