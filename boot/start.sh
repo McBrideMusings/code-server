@@ -82,12 +82,6 @@ fi
 mkdir -p /var/run/sshd
 /usr/sbin/sshd -e
 
-# Share Claude Code credentials with host (Tower) instance
-if [ -f /etc/claude-credentials.json ]; then
-  mkdir -p /root/.claude
-  ln -sf /etc/claude-credentials.json /root/.claude/.credentials.json
-fi
-
 # Start opencode web server in background
 echo "Starting opencode web on port 8444..."
 opencode web --port 8444 --hostname 0.0.0.0 &
