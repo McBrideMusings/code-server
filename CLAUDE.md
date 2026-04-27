@@ -72,13 +72,24 @@ Because `/root` is a host mount, shell configuration uses a layered approach:
 
 | File | Purpose |
 |---|---|
-| `Dockerfile` | Full image definition (~347 lines), all tooling installed here |
+| `Dockerfile` | Full image definition, all tooling installed here |
 | `boot/start.sh` | Container entrypoint — SSH, background services, VS Code launch |
 | `run.sh` | Convenience script: build image + run container with volume/port args |
 | `compose.dev.yaml` | Docker Compose definition for development |
+| `extras.sh.example` | Template for local build customizations (copy to `extras.sh`) |
 | `scripts/dmux` | tmux session wrapper (`dmux [path] [session-name]`) |
 | `scripts/dzellij` | zellij session wrapper (`dzellij [path] [session-name]`) |
 | `scripts/vscode-remote.sh` | `code()` and `codeweb()` shell functions for remote file opening |
+
+## Local Extras (gitignored)
+
+`extras.sh` (gitignored) runs at the end of the Docker build as root. Use it to install private or local tools that shouldn't be committed to the public repo.
+
+1. Copy the template: `cp extras.sh.example extras.sh`
+2. Add a `SOURCES=(...)` array listing any local repo paths to copy into the build context
+3. Add install commands below — these run inside the image, not on the host
+
+`run.sh` reads the `SOURCES` array from `extras.sh` using `awk` (not `source`) and copies each listed directory into `tools/<dirname>/` before building. The `tools/` directory is gitignored and cleaned up after the build.
 
 ## Installed AI Coding Tools
 

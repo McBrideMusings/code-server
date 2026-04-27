@@ -354,6 +354,8 @@ RUN chmod +x /usr/local/bin/start.sh
 # ---- Extras (local-only, gitignored) ----
 # Drop an extras.sh next to the Dockerfile to run arbitrary build steps.
 # Copy extras.sh.example → extras.sh and customize it.
+# Note: extras.sh.example must remain in the build context (not excluded by
+# .dockerignore) so the glob always matches at least one file.
 COPY extras.sh* /tmp/
 RUN [ -f /tmp/extras.sh ] && bash /tmp/extras.sh || true
 
