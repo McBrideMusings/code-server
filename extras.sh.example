@@ -1,0 +1,30 @@
+#!/usr/bin/env bash
+# Copy this file to extras.sh (gitignored) and add your own build steps.
+# extras.sh runs at the end of the Docker build as root inside the image.
+#
+# Any local source directories listed in SOURCES are copied from the host
+# into /tmp/tools/<dirname>/ before the build starts (handled by run.sh).
+#
+# SOURCES=(
+#   /mnt/user/storage/projects/cnav
+#   /mnt/user/storage/projects/wtree
+#   /mnt/user/storage/projects/admin-project-tool
+# )
+#
+# -- Go binaries --
+#
+# cd /tmp/tools/cnav && go build -o /usr/local/bin/cnav ./cmd/cnav
+# echo 'eval "$(cnav init)"' >> /etc/container-bashrc
+#
+# cd /tmp/tools/wtree && go build -o /usr/local/bin/wtree .
+#
+# -- Python library (admin-project-tool) --
+#
+# mkdir -p /usr/local/admin
+# cp -R /tmp/tools/admin-project-tool/admin_lib /usr/local/admin/
+# cp -R /tmp/tools/admin-project-tool/gen /usr/local/admin/
+# cp -R /tmp/tools/admin-project-tool/archetypes /usr/local/admin/
+# cp -R /tmp/tools/admin-project-tool/detectors /usr/local/admin/
+# cp /tmp/tools/admin-project-tool/init-admin /usr/local/admin/
+# chmod +x /usr/local/admin/init-admin
+# echo 'export PATH="/usr/local/admin:$PATH"' >> /etc/container-bashrc

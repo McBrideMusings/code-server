@@ -351,6 +351,12 @@ RUN chmod +x /usr/local/bin/dzellij
 COPY boot/start.sh /usr/local/bin/start.sh
 RUN chmod +x /usr/local/bin/start.sh
 
+# ---- Extras (local-only, gitignored) ----
+# Drop an extras.sh next to the Dockerfile to run arbitrary build steps.
+# Copy extras.sh.example → extras.sh and customize it.
+COPY extras.sh* /tmp/
+RUN [ -f /tmp/extras.sh ] && bash /tmp/extras.sh || true
+
 EXPOSE 8443 8444 8445 22
 EXPOSE 3300-3399
 EXPOSE 60000-60020/udp
