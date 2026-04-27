@@ -4,6 +4,8 @@ set -x
 
 echo "Starting container (VS Code Web + SSH)"
 
+umask 0002
+
 # Must be root; sshd binds 22 and we write under /root
 if [ "$(id -u)" -ne 0 ]; then
   echo "ERROR: Container not running as root (uid $(id -u)). Remove any --user override." >&2
