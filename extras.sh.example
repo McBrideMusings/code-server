@@ -2,29 +2,26 @@
 # Copy this file to extras.sh (gitignored) and add your own build steps.
 # extras.sh runs at the end of the Docker build as root inside the image.
 #
-# Any local source directories listed in SOURCES are copied from the host
-# into /tmp/tools/<dirname>/ before the build starts (handled by run.sh).
+# List local source directories in SOURCES — run.sh copies them into
+# /tmp/tools/<dirname>/ before the build so they're available here.
 #
 # SOURCES=(
-#   /mnt/user/storage/projects/cnav
-#   /mnt/user/storage/projects/wtree
-#   /mnt/user/storage/projects/admin-project-tool
+#   /path/to/your/tool
 # )
 #
-# -- Go binaries --
+# -- Go binary --
 #
-# cd /tmp/tools/cnav && go build -o /usr/local/bin/cnav ./cmd/cnav
-# echo 'eval "$(cnav init)"' >> /etc/container-bashrc
+# cd /tmp/tools/mytool && go build -o /usr/local/bin/mytool .
 #
-# cd /tmp/tools/wtree && go build -o /usr/local/bin/wtree .
+# -- Go binary with shell init (e.g. needs eval for cd support) --
 #
-# -- Python library (admin-project-tool) --
+# cd /tmp/tools/mytool && go build -o /usr/local/bin/mytool ./cmd/mytool
+# echo 'eval "$(mytool init)"' >> /etc/container-bashrc
 #
-# mkdir -p /usr/local/admin
-# cp -R /tmp/tools/admin-project-tool/admin_lib /usr/local/admin/
-# cp -R /tmp/tools/admin-project-tool/gen /usr/local/admin/
-# cp -R /tmp/tools/admin-project-tool/archetypes /usr/local/admin/
-# cp -R /tmp/tools/admin-project-tool/detectors /usr/local/admin/
-# cp /tmp/tools/admin-project-tool/init-admin /usr/local/admin/
-# chmod +x /usr/local/admin/init-admin
-# echo 'export PATH="/usr/local/admin:$PATH"' >> /etc/container-bashrc
+# -- Python library installed system-wide --
+#
+# mkdir -p /usr/local/mylib
+# cp -R /tmp/tools/mylib/src /usr/local/mylib/
+# cp /tmp/tools/mylib/entrypoint /usr/local/mylib/
+# chmod +x /usr/local/mylib/entrypoint
+# echo 'export PATH="/usr/local/mylib:$PATH"' >> /etc/container-bashrc
