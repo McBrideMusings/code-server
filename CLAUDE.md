@@ -28,9 +28,7 @@ There are no test suites, linters, or CI pipelines. Validation happens at build 
 The container runs several concurrent services, all managed from `boot/start.sh` (the ENTRYPOINT):
 
 1. **SSH daemon** — key-based auth only, host keys persisted via volume mount
-2. **OpenCode web** — port 8444
-3. **OpenChamber web** — port 8445
-4. **VS Code Server** (`code serve-web`) — primary process (runs via `exec`, port 8443)
+2. **VS Code Server** (`code serve-web`) — primary process (runs via `exec`, port 8443)
 
 ### Volume Strategy (Hybrid Mounting)
 
@@ -59,14 +57,15 @@ Because `/root` is a host mount, shell configuration uses a layered approach:
 
 ### Port Map
 
+All named ports are bound to the Tailscale interface (`100.114.249.118`) only. Dev and mosh ranges are unbound (all interfaces).
+
 | Port | Service |
 |---|---|
 | 8443 | VS Code Server (HTTPS) |
-| 8444 | OpenCode web |
-| 8445 | OpenChamber web |
 | 22 (→ 2222) | SSH |
-| 3300-3399 | Development use |
-| 60000-60020/udp | mosh |
+| 17850–17854 | cc_tool (reserved, not auto-started) |
+| 3300-3399 | Development use (all interfaces) |
+| 60000-60020/udp | mosh (all interfaces) |
 
 ## Key Files
 
@@ -100,10 +99,8 @@ These are installed in the Dockerfile and moved to system paths so they survive 
 | Claude Code | `https://claude.ai/install.sh` | `/usr/local/bin/claude` | `ANTHROPIC_API_KEY` |
 | OpenAI Codex | `npm install -g @openai/codex` | `/usr/local/bin/codex` | `OPENAI_API_KEY` |
 | Google Gemini | `npm install -g @google/gemini-cli` | `/usr/local/bin/gemini` | `GOOGLE_AI_API_KEY` |
-| OpenCode | `https://opencode.ai/install` | `/usr/local/bin/opencode` | — |
-| OpenChamber | `pnpm add -g @openchamber/web` | `/usr/local/bin/openchamber` | — |
 
-Build-time validation in the Dockerfile checks that `claude`, `codex`, `gemini`, and `opencode` are in PATH. If adding a new AI tool, follow the same pattern: install globally, copy/link the binary to `/usr/local/bin/`, and add a validation step.
+Build-time validation in the Dockerfile checks that `claude`, `codex`, and `gemini` are in PATH. If adding a new AI tool, follow the same pattern: install globally, copy/link the binary to `/usr/local/bin/`, and add a validation step.
 
 ## Editing Guidelines
 

@@ -268,9 +268,6 @@ RUN npm install -g @openai/codex
 RUN npm install -g @google/gemini-cli
 RUN curl -fsSL https://claude.ai/install.sh | bash && \
     mv ~/.local/bin/claude /usr/local/bin/claude
-RUN curl -fsSL https://opencode.ai/install | bash && \
-    . ~/.bashrc && \
-    cp "$(which opencode)" /usr/local/bin/opencode
 
 # Container-managed bash configuration (survives home directory mount)
 RUN printf '%s\n' \
@@ -305,14 +302,11 @@ RUN echo "=== Validating LLM Tool Installations ===" && \
     (which gemini && echo "✓ gemini found in PATH" || echo "✗ gemini NOT found in PATH") && \
     echo "Checking claude..." && \
     (which claude && echo "✓ claude found in PATH" || echo "✗ claude NOT found in PATH") && \
-    echo "Checking opencode..." && \
-    (which opencode && echo "✓ opencode found in PATH" || echo "✗ opencode NOT found in PATH") && \
     echo "Current PATH: $PATH" && \
     echo "Searching for missing binaries..." && \
     (find /usr /home /root /opt -name "codex" -type f 2>/dev/null | head -3 || echo "codex binary not found anywhere") && \
     (find /usr /home /root /opt -name "gemini" -type f 2>/dev/null | head -3 || echo "gemini binary not found anywhere") && \
     (find /usr /home /root /opt -name "claude" -type f 2>/dev/null | head -3 || echo "claude binary not found anywhere") && \
-    (find /usr /home /root /opt -name "opencode" -type f 2>/dev/null | head -3 || echo "opencode binary not found anywhere") && \
     echo "=== End Validation ==="
 
 # Validate FFmpeg NVENC support
@@ -359,7 +353,8 @@ RUN chmod +x /usr/local/bin/start.sh
 COPY extras.sh* /tmp/
 RUN [ -f /tmp/extras.sh ] && bash /tmp/extras.sh || true
 
-EXPOSE 8443 8444 8445 22
+EXPOSE 8443 22
+EXPOSE 17850 17851 17852 17853 17854
 EXPOSE 3300-3399
 EXPOSE 60000-60020/udp
 USER root
