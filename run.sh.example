@@ -1,0 +1,35 @@
+#!/bin/bash
+# Run the code-server container.
+# Copy this to run.sh and fill in your machine-specific values.
+# Build the image first with: ./build.sh
+
+if docker ps -a --format '{{.Names}}' | grep -q '^code-server$'; then
+  echo "Stopping and removing existing container..."
+  docker stop code-server
+  docker rm code-server
+fi
+
+echo "Starting container..."
+if ! docker run -d \
+  --name code-server \
+  --hostname code-server \
+  --user root \
+  --restart unless-stopped \
+  -e GIT_USER="Your Name" \
+  -e GIT_EMAIL="you@example.com" \
+  -e SHELL=/bin/bash \
+  -e SERVER_DATA_DIR=/root/.vscode-server \
+  -p 127.0.0.1:8443:8443 \
+  -v /path/to/home:/root \
+  -v /path/to/projects:/root/projects \
+  -v /path/to/ssh-keys:/etc/ssh/keys \
+  -v /path/to/authorized_keys:/etc/ssh/authorized_keys:ro \
+  --gpus all \
+  --cap-add=CAP_PERFMON \
+  --security-opt seccomp=unconfined \
+  code-server:latest; then
+  echo "Error: Failed to start container!"
+  exit 1
+fi
+
+echo "Done! Check status with: docker logs code-server"

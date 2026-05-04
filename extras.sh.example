@@ -2,7 +2,7 @@
 # Copy this file to extras.sh (gitignored) and add your own build steps.
 # extras.sh runs at the end of the Docker build as root inside the image.
 #
-# List local source directories in SOURCES — run.sh copies them into
+# List local source directories in SOURCES — build.sh copies them into
 # /tmp/tools/<dirname>/ before the build so they're available here.
 #
 # SOURCES=(

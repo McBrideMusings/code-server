@@ -9,13 +9,13 @@ This is a containerized development environment built on Debian Bookworm. It pac
 ## Build & Run
 
 ```bash
-# Build the Docker image
-docker build -t code-server:latest -f Dockerfile .
+# Build the Docker image (handles extras.sh SOURCES if present)
+./build.sh
 
-# Build and run (stops old container, builds, starts new one)
+# Run the container (machine-specific, gitignored — copy run.sh.example to run.sh)
 ./run.sh
 
-# Or use Docker Compose
+# Or use Docker Compose (machine-specific, gitignored — customize compose.dev.yaml)
 docker compose -f compose.dev.yaml up --build
 ```
 
@@ -73,8 +73,10 @@ All named ports are bound to the Tailscale interface (`100.114.249.118`) only. D
 |---|---|
 | `Dockerfile` | Full image definition, all tooling installed here |
 | `boot/start.sh` | Container entrypoint — SSH, background services, VS Code launch |
-| `run.sh` | Convenience script: build image + run container with volume/port args |
-| `compose.dev.yaml` | Docker Compose definition for development |
+| `build.sh` | Builds the image; copies `extras.sh` SOURCES into build context if present |
+| `run.sh.example` | Template for the machine-local run script (copy to `run.sh` and customize) |
+| `run.sh` | Machine-local run script — gitignored, not in repo |
+| `compose.dev.yaml` | Machine-local Docker Compose definition — gitignored, not in repo |
 | `extras.sh.example` | Template for local build customizations (copy to `extras.sh`) |
 | `scripts/dmux` | tmux session wrapper (`dmux [path] [session-name]`) |
 | `scripts/dzellij` | zellij session wrapper (`dzellij [path] [session-name]`) |
@@ -88,7 +90,7 @@ All named ports are bound to the Tailscale interface (`100.114.249.118`) only. D
 2. Add a `SOURCES=(...)` array listing any local repo paths to copy into the build context
 3. Add install commands below — these run inside the image, not on the host
 
-`run.sh` reads the `SOURCES` array from `extras.sh` using `awk` (not `source`) and copies each listed directory into `tools/<dirname>/` before building. The `tools/` directory is gitignored and cleaned up after the build.
+`build.sh` reads the `SOURCES` array from `extras.sh` using `awk` (not `source`) and copies each listed directory into `tools/<dirname>/` before building. The `tools/` directory is gitignored and cleaned up after the build.
 
 ## Installed AI Coding Tools
 
