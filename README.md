@@ -10,7 +10,7 @@ This was made for my needs specifically. I'd recommend this be a baseline for a 
 - **VS Code Server**: Web-based VS Code interface accessible via browser
 - **SSH Access**: Full terminal access with persistent host keys
 - **Multi-language Support**: Go, Rust, Node.js, Python, PHP, C/C++
-- **AI Coding Tools**: Claude, OpenAI Codex, Gemini, OpenCode integration
+- **AI Coding Tools**: Claude, OpenAI Codex, Gemini
 - **GPU Support**: NVIDIA CUDA and Intel/AMD VAAPI hardware acceleration
 - **Development Tools**: Docker, Git, tmux, zellij, and comprehensive build toolchain
 
@@ -60,8 +60,6 @@ The container uses a hybrid mounting approach:
 
 ### Default Ports
 - **VS Code**: `8443` (HTTPS web interface)
-- **OpenCode**: `8444` (web interface)
-- **OpenChamber**: `8445` (web interface)
 - **SSH**: `2222` (mapped to container port 22)
 - **Dev Ports**: `3300-3399` for application development
 - **UDP**: `60000-60020` for mosh
@@ -80,7 +78,7 @@ The container uses a hybrid mounting approach:
 
 ## AI Coding Integration
 
-The container includes multiple AI coding assistants: Claude Code, OpenAI Codex, Google Gemini, OpenCode, and OpenChamber. All are installed globally and moved to `/usr/local/bin/` so they survive the home directory mount.
+The container includes multiple AI coding assistants: Claude Code, OpenAI Codex, and Google Gemini. All are installed globally and moved to `/usr/local/bin/` so they survive the home directory mount.
 
 ## SSH Configuration
 
@@ -105,6 +103,13 @@ The container manages shell configuration through multiple layers:
 - Command history via mounted `.bash_history`
 - User customizations can be added to mounted home directory
 - Git configuration persists across rebuilds
+
+## Build & Run
+
+```bash
+./build.sh   # build the image (handles extras.sh if present)
+./run.sh     # start the container (copy run.sh.example → run.sh, customize first)
+```
 
 ## Sample Compose File
 
