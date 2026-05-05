@@ -235,17 +235,21 @@ RUN set -eux; \
     i965-va-driver || echo "Intel VA drivers not available, continuing without them"; \
   rm -rf /var/lib/apt/lists/*
 
-# ---- FFmpeg with NVENC support from Jellyfin (recommended for GPU encoding) ----
+# ---- FFmpeg (BtbN master-latest static GPL build — libvmaf + NVENC + full codec suite) ----
 RUN set -eux; \
-  apt-get update; \
-  apt-get install -y --no-install-recommends curl gpg; \
-  curl -fsSL https://repo.jellyfin.org/install-debuntu.sh | bash; \
-  apt-get update; \
-  apt-get install -y --no-install-recommends jellyfin-ffmpeg6; \
-  # Create symbolic links for standard ffmpeg/ffprobe commands
-  ln -sf /usr/lib/jellyfin-ffmpeg/ffmpeg /usr/local/bin/ffmpeg; \
-  ln -sf /usr/lib/jellyfin-ffmpeg/ffprobe /usr/local/bin/ffprobe; \
-  rm -rf /var/lib/apt/lists/*
+  arch="$(dpkg --print-architecture)"; \
+  case "$arch" in \
+    amd64) btbn_arch=linux64 ;; \
+    arm64) btbn_arch=linuxarm64 ;; \
+    *) echo "unsupported arch: $arch"; exit 1 ;; \
+  esac; \
+  curl -fsSL "https://github.com/BtbN/FFmpeg-Builds/releases/download/latest/ffmpeg-master-latest-${btbn_arch}-gpl.tar.xz" -o /tmp/ffmpeg.tar.xz; \
+  tar -xJf /tmp/ffmpeg.tar.xz -C /tmp/ --strip-components=2 \
+    --wildcards "*/bin/ffmpeg" "*/bin/ffprobe"; \
+  mv /tmp/ffmpeg /usr/local/bin/ffmpeg; \
+  mv /tmp/ffprobe /usr/local/bin/ffprobe; \
+  chmod +x /usr/local/bin/ffmpeg /usr/local/bin/ffprobe; \
+  rm /tmp/ffmpeg.tar.xz
 
 # ---- Microsoft VS Code repo + VS Code (provides `code`) ----
 RUN set -eux; \
@@ -309,12 +313,15 @@ RUN echo "=== Validating LLM Tool Installations ===" && \
     (find /usr /home /root /opt -name "claude" -type f 2>/dev/null | head -3 || echo "claude binary not found anywhere") && \
     echo "=== End Validation ==="
 
-# Validate FFmpeg NVENC support
-RUN echo "=== Validating FFmpeg NVENC Support ===" && \
+# Validate FFmpeg NVENC + libvmaf support
+RUN echo "=== Validating FFmpeg Support ===" && \
     ffmpeg -version && \
     echo "Available NVENC encoders:" && \
     ffmpeg -encoders 2>/dev/null | grep nvenc && \
     echo "✓ NVENC support confirmed" && \
+    echo "Checking libvmaf filter:" && \
+    ffmpeg -filters 2>/dev/null | grep "libvmaf" && \
+    echo "✓ libvmaf confirmed" && \
     echo "Checking NVIDIA video libraries (requires runtime with GPU access):" && \
     (ldconfig -p | grep libnvidia-encode || echo "⚠ NVIDIA video libraries not found - requires GPU runtime") && \
     echo "=== End FFmpeg Validation ==="
