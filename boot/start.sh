@@ -82,6 +82,24 @@ fi
 mkdir -p /var/run/sshd
 /usr/sbin/sshd -e
 
+# Claude Drop services (only if the user mounts ~/.claude with claude-drop bins).
+# Containers have no systemd, so we run the receiver and the polling watcher
+# directly from the entrypoint instead of as user units.
+if [ -x /root/.claude/claude-drop/bin/claude-drop-receiver ]; then
+  if command -v tailscale >/dev/null 2>&1; then
+    echo "Starting Claude Drop receiver..."
+    /root/.claude/claude-drop/bin/claude-drop-receiver \
+      >>/var/log/claude-drop-receiver.log 2>&1 &
+    if [ -x /root/.claude/claude-drop/bin/claude-drop-watcher ]; then
+      echo "Starting Claude Drop responder watcher..."
+      /root/.claude/claude-drop/bin/claude-drop-watcher \
+        >>/var/log/claude-drop-watcher.log 2>&1 &
+    fi
+  else
+    echo "Claude Drop present but tailscale CLI not on PATH; skipping receiver/watcher."
+  fi
+fi
+
 # VS Code Web
 HOST="${HOST:-0.0.0.0}"
 PORT="${PORT:-8443}"

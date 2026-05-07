@@ -1,0 +1,59 @@
+# compose.dev.yaml.example — copy to compose.dev.yaml on the host (Unraid) and
+# fill in the host-specific paths. compose.dev.yaml is gitignored because it
+# carries personal/host paths; this template stays committed.
+#
+# Replace ${...} placeholders or set them in a .env file next to this compose.
+#
+# Tailscale mounts assume the Unraid Community Apps Tailscale plugin
+# (binaries at /usr/local/sbin/tailscale{d}, socket at /var/run/tailscale).
+# If your tailscale lives elsewhere, adjust those two volume entries.
+
+services:
+  code-server:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: code-server:latest
+    container_name: code-server
+    hostname: ${HOSTNAME:-dev-server}
+    user: root
+    restart: unless-stopped
+
+    environment:
+      - GIT_USER=${GIT_USER}
+      - GIT_EMAIL=${GIT_EMAIL}
+      - SERVER_DATA_DIR=/root/.vscode-server
+
+    ports:
+      - "${VSCODE_PORT:-8443}:8443"
+      - "${SSH_PORT:-2222}:22"
+      - "3300-3399:3300-3399"
+      - "60000-60020:60000-60020/udp"
+
+    volumes:
+      # Persistent home + projects (host paths)
+      - ${APPDATA_HOME}:/root
+      - ${PROJECTS_DIR}:/root/projects
+      - ${APPDATA_SSH}:/etc/ssh/keys
+      - ${AUTHORIZED_KEYS_FILE}:/etc/ssh/authorized_keys:ro
+
+      # Docker socket (so `docker` inside the container talks to the host daemon)
+      - /var/run/docker.sock:/var/run/docker.sock
+
+      # Tailscale CLI + local API socket forwarded from the host.
+      # The CLI inside the container shares the host's tailnet identity.
+      - /usr/local/sbin/tailscale:/usr/local/bin/tailscale:ro
+      - /var/run/tailscale:/var/run/tailscale
+
+    # GPU support: NVIDIA
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: all
+              capabilities: [gpu]
+
+    # VAAPI (Intel/AMD hardware acceleration)
+    devices:
+      - /dev/dri:/dev/dri

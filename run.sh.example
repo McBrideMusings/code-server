@@ -24,6 +24,9 @@ if ! docker run -d \
   -v /path/to/projects:/root/projects \
   -v /path/to/ssh-keys:/etc/ssh/keys \
   -v /path/to/authorized_keys:/etc/ssh/authorized_keys:ro \
+  -v /var/run/docker.sock:/var/run/docker.sock \
+  -v /usr/local/sbin/tailscale:/usr/local/bin/tailscale:ro \
+  -v /var/run/tailscale:/var/run/tailscale \
   --gpus all \
   --cap-add=CAP_PERFMON \
   --security-opt seccomp=unconfined \

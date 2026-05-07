@@ -141,6 +141,10 @@ services:
       - /path/to/ssh-keys:/etc/ssh/keys
       - ~/.ssh/authorized_keys:/etc/ssh/authorized_keys:ro
       - /var/run/docker.sock:/var/run/docker.sock
+      # Tailscale CLI + local API socket (Unraid CA plugin paths shown).
+      # The CLI inside the container reuses the host's tailnet identity.
+      - /usr/local/sbin/tailscale:/usr/local/bin/tailscale:ro
+      - /var/run/tailscale:/var/run/tailscale
 
     # GPU support: NVIDIA
     deploy:
