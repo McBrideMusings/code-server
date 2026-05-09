@@ -63,7 +63,8 @@ All named ports are bound to the Tailscale interface (`100.114.249.118`) only. D
 |---|---|
 | 8443 | VS Code Server (HTTPS) |
 | 22 (→ 2222) | SSH |
-| 17850–17854 | cc_tool (reserved, not auto-started) |
+| 17850–17852 | cc_tool — container-side (reserved, not auto-started) |
+| 17853–17854 | cc_tool — host-side (not forwarded to container) |
 | 3300-3399 | Development use (all interfaces) |
 | 60000-60020/udp | mosh (all interfaces) |
 
