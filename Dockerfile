@@ -235,6 +235,18 @@ RUN set -eux; \
     i965-va-driver || echo "Intel VA drivers not available, continuing without them"; \
   rm -rf /var/lib/apt/lists/*
 
+# ---- alass (subtitle synchroniser, static Rust binary; used by Recodarr subs-clean) ----
+ARG ALASS_VERSION=v2.0.0
+RUN set -eux; \
+  arch="$(dpkg --print-architecture)"; \
+  case "$arch" in \
+    amd64) targ=alass-linux64 ;; \
+    *) echo "alass: no prebuilt binary for $arch — skipping"; exit 0 ;; \
+  esac; \
+  curl -fsSL "https://github.com/kaegi/alass/releases/download/${ALASS_VERSION}/${targ}" -o /usr/local/bin/alass; \
+  chmod +x /usr/local/bin/alass; \
+  /usr/local/bin/alass --version
+
 # ---- FFmpeg (BtbN master-latest static GPL build — libvmaf + NVENC + full codec suite) ----
 RUN set -eux; \
   arch="$(dpkg --print-architecture)"; \
