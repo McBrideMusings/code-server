@@ -4,3 +4,4 @@ container-root
 .claude/*
 extras.sh
 tools/
+*.local.*
